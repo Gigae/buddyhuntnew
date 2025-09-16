@@ -39,6 +39,10 @@ jobs:
       # *** HART: Niemals npm ci, nur install – mit legacy peer deps ***
       - name: Install deps (robust)
         env:
+          CI: true
+          EXPO_NO_TELEMETRY: 1
+          npm_config_ci: "false"
+          GRADLE_OPTS: "-Xmx4g -Dfile.encoding=UTF-8"
           npm_config_legacy_peer_deps: "true"
           npm_config_audit: "false"
           npm_config_fund: "false"
@@ -62,6 +66,21 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+              - name: Bump Gradle heap + tame parallelism
+      - name: Bump Gradle heap + tame parallelism
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8" >> android/gradle.properties
+          echo "org.gradle.parallel=false" >> android/gradle.properties
+          echo "org.gradle.workers.max=2" >> android/gradle.properties
+
+      - name: Clean Gradle caches (optional if still OOM)
+        run: |
+          rm -rf ~/.gradle/caches/* || true
+
+      - name: Clean Gradle caches (optional if still OOM)
+        run: |
+          rm -rf ~/.gradle/caches/* || true
+
 
       - name: Build Debug APK
         run: |
