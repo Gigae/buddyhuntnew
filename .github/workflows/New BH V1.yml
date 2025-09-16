@@ -20,14 +20,17 @@ jobs:
           node-version: 18
           cache: 'npm'
 
-      - name: Install deps
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm config set legacy-peer-deps true
-            npm install --no-audit --no-fund --loglevel=warn --no-optional
-          fi
+- name: Remove lockfile (force fresh resolve)
+  run: rm -f package-lock.json
+
+- name: Install deps (robust)
+  run: |
+    npm config set legacy-peer-deps true
+    npm install --no-audit --no-fund --loglevel=warn --no-optional
+
+- name: Align to Expo SDK (optional)
+  run: npx expo install --fix || true
+
 
       - name: Align to Expo SDK (optional)
         run: npx expo install --fix || true
