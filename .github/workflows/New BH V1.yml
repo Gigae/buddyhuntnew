@@ -31,10 +31,6 @@ jobs:
 - name: Align to Expo SDK (optional)
   run: npx expo install --fix || true
 
-
-      - name: Align to Expo SDK (optional)
-        run: npx expo install --fix || true
-
       # Wichtig: kein --non-interactive verwenden; CI=1 übernimmt das
       - name: Prebuild Android (generate android/)
         run: npx expo prebuild --platform android --no-install
