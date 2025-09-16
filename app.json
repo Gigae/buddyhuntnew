@@ -9,6 +9,10 @@
     "android": {
       "package": "com.buddyhunt.app",
       "versionCode": 3
+    },
+    "splash": {
+      "backgroundColor": "#0b3d0b",
+      "resizeMode": "contain"
     }
   }
 }
