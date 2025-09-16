@@ -1,4 +1,4 @@
-name: Android Debug APK (npm robust)
+name: Android Debug APK (hard no-ci install)
 
 on:
   push:
@@ -9,10 +9,20 @@ jobs:
   build-android-debug:
     runs-on: ubuntu-latest
     env:
-      CI: true   # <- wichtig: non-interactive Modus für Expo
+      CI: true                 # non-interactive für Expo
+      EXPO_NO_TELEMETRY: 1
+      npm_config_ci: "false"   # verhindert jegliches ci-Verhalten von npm
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Debug: list files
+        run: |
+          pwd
+          ls -la
+          node -v || true
+          npm -v || true
 
       - name: Setup Node 18
         uses: actions/setup-node@v4
@@ -20,18 +30,27 @@ jobs:
           node-version: 18
           cache: 'npm'
 
-- name: Remove lockfile (force fresh resolve)
-  run: rm -f package-lock.json
+      # *** WICHTIG: Lockfile weg und verifizieren ***
+      - name: Remove lockfile (force fresh resolve)
+        run: |
+          rm -f package-lock.json
+          if [ -f package-lock.json ]; then echo "lockfile still present"; exit 1; else echo "no lockfile"; fi
 
-- name: Install deps (robust)
-  run: |
-    npm config set legacy-peer-deps true
-    npm install --no-audit --no-fund --loglevel=warn --no-optional
+      # *** HART: Niemals npm ci, nur install – mit legacy peer deps ***
+      - name: Install deps (robust)
+        env:
+          npm_config_legacy_peer_deps: "true"
+          npm_config_audit: "false"
+          npm_config_fund: "false"
+        run: |
+          npm install --loglevel=warn --no-optional
+          echo "lockfile status:"
+          if [ -f package-lock.json ]; then echo "lockfile created"; else echo "no lockfile created"; fi
 
-- name: Align to Expo SDK (optional)
-  run: npx expo install --fix || true
+      - name: Align to Expo SDK (optional)
+        run: npx expo install --fix || true
 
-      # Wichtig: kein --non-interactive verwenden; CI=1 übernimmt das
+      # Kein --non-interactive Flag; CI=1 übernimmt das
       - name: Prebuild Android (generate android/)
         run: npx expo prebuild --platform android --no-install
 
@@ -49,7 +68,7 @@ jobs:
           cd android
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
